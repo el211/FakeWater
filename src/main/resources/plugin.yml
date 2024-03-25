@@ -1,0 +1,14 @@
+name: FakeWaterPlugin
+version: 1.0
+description: A plugin that introduces fake water with poisonous properties to Minecraft.
+author: YourName
+main: com.afelia.FakeWaterPlugin.FakeWaterPlugin
+api-version: '1.20'
+permissions:
+  get.fakewater:
+    description: Allows players to execute the /getfakewaterbucket command.
+commands:
+  getfakewaterbucket:
+    description: Gives the player a fake water bucket.
+    usage: /getfakewaterbucket
+    permission: get.fakewater

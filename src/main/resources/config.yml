@@ -1,0 +1,12 @@
+# Configuration for FakeWaterPlugin
+
+# If true, the player dies when they exit fake water
+Kill-player-on-end: true
+
+# Configuration for Fake Water Bucket
+FakeWaterBucket:
+  # Name displayed for the Fake Water Bucket item
+  Name: "&f&lFake Water"
+
+  # Custom model data for the Fake Water Bucket item (optional)
+  CustomModelData: 1234
