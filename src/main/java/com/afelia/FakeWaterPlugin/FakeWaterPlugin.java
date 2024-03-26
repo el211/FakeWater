@@ -6,6 +6,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -141,26 +142,20 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
 
         fakeWaterBlocks.clear(); // Clear the list to avoid duplicates
         FileConfiguration dataConfig = YamlConfiguration.loadConfiguration(file);
-        List<String> blockStrings = dataConfig.getStringList("fakeWaterBlocks");
-        for (String blockString : blockStrings) {
-            String[] parts = blockString.split(":");
-            if (parts.length == 4) {
-                int x = Integer.parseInt(parts[0]);
-                int y = Integer.parseInt(parts[1]);
-                int z = Integer.parseInt(parts[2]);
-                String worldName = parts[3];
-                World world = Bukkit.getWorld(worldName);
-                if (world != null) {
-                    Block block = world.getBlockAt(x, y, z);
+        ConfigurationSection blockSection = dataConfig.getConfigurationSection("fakeWaterBlocks");
+        if (blockSection != null) {
+            for (String key : blockSection.getKeys(false)) {
+                Location location = (Location) blockSection.get(key);
+                if (location != null) {
+                    Block block = location.getBlock();
                     fakeWaterBlocks.add(block);
                 } else {
-                    getLogger().warning("Failed to load fake water block: World '" + worldName + "' not found.");
+                    getLogger().warning("Failed to load fake water block: Invalid location for key " + key);
                 }
             }
         }
         getLogger().info("Loaded " + fakeWaterBlocks.size() + " fake water blocks from data.yml.");
     }
-
 
     private void saveFakeWaterBlocks() {
         File file = new File(getDataFolder(), "data.yml");
@@ -170,11 +165,13 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
         }
 
         FileConfiguration dataConfig = YamlConfiguration.loadConfiguration(file);
-        List<String> blockStrings = new ArrayList<>();
+        ConfigurationSection blockSection = dataConfig.createSection("fakeWaterBlocks");
+        int index = 0;
         for (Block block : fakeWaterBlocks) {
-            blockStrings.add(block.getX() + ":" + block.getY() + ":" + block.getZ() + ":" + block.getWorld().getName());
+            String key = "block" + index;
+            blockSection.set(key, block.getLocation());
+            index++;
         }
-        dataConfig.set("fakeWaterBlocks", blockStrings);
 
         try {
             // Save the data using the existing FileConfiguration object
@@ -184,10 +181,13 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
             getLogger().warning("Failed to save data.yml: " + e.getMessage());
         }
     }
+
+
     private FileConfiguration getDataConfig() {
         File file = new File(getDataFolder(), "data.yml");
         return YamlConfiguration.loadConfiguration(file);
     }
+
     private void saveDataConfig(FileConfiguration dataConfig) {
         File file = new File(getDataFolder(), "data.yml");
         try {
@@ -196,6 +196,7 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
             getLogger().warning("Failed to save data.yml: " + e.getMessage());
         }
     }
+
     private void setBlock(Block block) {
         Location location = block.getLocation();
         String worldName = location.getWorld().getName();
@@ -209,7 +210,6 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
 
         saveDataConfig(dataConfig);
     }
-
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
@@ -226,7 +226,6 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
             stopFakeWaterDamage(player); // Stop continuous damage
         }
     }
-
 
     @EventHandler
     public void onBlockForm(BlockFormEvent event) {
@@ -267,7 +266,6 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
         fakeWaterBlocks.add(block); // Add the block to the fake water blocks list
     }
 
-
     private void setFakeWaterBlock(Block block) {
         block.setType(Material.WATER); // Set block to water
         block.setMetadata(FAKE_WATER_METADATA_KEY, new FixedMetadataValue(this, true));
@@ -282,7 +280,6 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
         return (feetBlock.getType() == Material.WATER && feetBlock.hasMetadata(FAKE_WATER_METADATA_KEY)) ||
                 (headBlock.getType() == Material.WATER && headBlock.hasMetadata(FAKE_WATER_METADATA_KEY));
     }
-
 
     private void startFakeWaterDamage(Player player) {
         new BukkitRunnable() {
@@ -351,4 +348,5 @@ public class FakeWaterPlugin extends JavaPlugin implements Listener {
         player.sendMessage("You've received a Fake Water Bucket!");
     }
 }
+
 
